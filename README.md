@@ -7,7 +7,7 @@ var devices = []; // create array where all devices are stored
 
 var device = function(parameters){
 	obj = this; // get instance
-	for(var key in parameters){
+	for(var key in parameters){ // loop attributes
 		obj[ key ] = parameters[ key ]; // set attribute
 	}
 	

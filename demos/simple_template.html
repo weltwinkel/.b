@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<head>
+    <title>databinding</title>
+<script src="ext/jquery.js"></script>
+<script src="../src/b.js"></script>
+<script src="../src/jQuery_b.js"></script>
+</head>
+<body>
+<script>
+
+// create objects
+var devices = []; // create array where all devices are stored
+
+var device = function(parameters){
+	obj = this; // get instance
+	for(var key in parameters){ // loop attributes
+		obj[ key ] = parameters[ key ]; // set attribute
+	}
+	
+	obj.id = devices.length;
+	devices.push(obj);
+};
+	
+// create the devices
+for(var i = 0; i < 5000; i++){
+	var category = Math.round(Math.random()*10); // random category between 0 -> 6
+	new device({alias : "Device " + i, status : 2, category : category});
+	}
+
+
+b.formatters.err = function(params){
+	
+	var stat;
+	switch(params[0].object[ params[0].param ]){
+		case 0: stat = "OK"; break;
+		case 1: stat = "GuessOk"; break;
+		case 2: stat = "Unknown"; break;
+		case 3: stat = "Warning"; break;
+		case 4: stat = "Minor"; break;
+		case 5: stat = "Major"; break;
+		case 6: stat = "Critical"; break;
+	}
+	
+	params.formatted = stat; // add formatted value
+	return params; // return object
+};
+
+$(function(){
+
+	$(document).on("click","#categories > div",function(e){
+		var category = $(e.target).attr("id");
+		loadCategory( category );
+		});
+		
+	template = new b.template();
+	
+	listCategories();
+	loadCategory(0);
+});
+
+function listCategories(){
+	for(var i = 0; i <= 10; i++){
+		$("<div>",{ id : i }).html("Category: " + i).appendTo("#categories");
+	}
+}
+
+function loadCategory(cat){
+	
+	// clear list
+	$("#category").empty();
+	
+	// unbind 
+	template.unbind();
+	
+	// loop devices and create them using jQuery_b
+	devices.forEach(function(device){
+	
+		if(cat == device.category){
+		
+			var row = $("<div>").appendTo("#category");
+			
+			$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : device},template).appendTo( row );
+			$("<span>").html( device.alias ).appendTo( row );
+			$("<span>").html( "ID: " + device.id ).appendTo( row );
+			$("<span>").html( "category: " + device.category ).appendTo( row );
+		}
+	});
+}
+
+window.setInterval(function(){
+
+	devices.forEach(function(device){
+		var stat = Math.round(Math.random()*6);
+		try{
+			device._set("status", stat );
+		}catch(e){
+			device["status"] = stat;
+			}
+		});
+	},1000);
+	
+</script>
+<style>
+body{font-family:verdana; font-size:11pt;}
+#categories{height:200px; overflow:auto;}
+#categories > div{cursor:pointer; margin-bottom:1px; padding:4px;}
+#categories > div:hover, #category > div:hover{background:#f0f0f0;}
+
+#category{height:400px; overflow:auto;}
+#category > div:nth-of-type(even), #categories > div:nth-of-type(even){margin:1px; background:#f7f7f7;}
+#category > div > span{padding:8px; display:inline-block;}
+#category > div > span:first-of-type{width:80px; border-radius:8px;}
+.OK{background-color:#d1ee63 !important;}
+.GuessOk{background-color:#eeffaa !important;}
+.Unknown{background-color:#f2f2f2 !important;}
+.Warning{background-color:#ffff80 !important;}
+.Minor{background-color:#fdc375 !important;}
+.Major{background-color:#ff8a8a !important;}
+.Critical{background-color:#ff5555 !important;}
+
+</style>
+<div id="categories"></div>
+<div id="category"></div>
+</body>
+</html>
