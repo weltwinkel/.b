@@ -3,6 +3,8 @@
     <title>databinding</title>
 <script src="ext/jquery.js"></script>
 <script src="../src/b.js"></script>
+<script src="../src/b.binders.js"></script>
+<script src="../src/b.formatters.js"></script>
 <script src="../src/jQuery_b.js"></script>
 </head>
 <body>
@@ -15,6 +17,7 @@ var device = function(parameters){
 	obj = this; // get instance
 	for(var key in parameters){ // loop attributes
 		obj[ key ] = parameters[ key ]; // set attribute
+		obj["foo.bar"] = "hello";
 	}
 	
 	obj.id = devices.length;
@@ -22,13 +25,14 @@ var device = function(parameters){
 };
 	
 // create the devices
-for(var i = 0; i < 20; i++){
-	new device({alias : "Device " + i, status : 2});
-	}
-
+var d = new device({alias : "Device 1", status : 2});
+var t1 = new b.template();
+var t2 = new b.template();
+var t3 = new b.template();
+var t4 = new b.template();
 
 b.formatters.err = function(params){
-	
+	console.log(params);
 	var stat;
 	switch(params[0].object[ params[0].param ]){
 		case 0: stat = "OK"; break;
@@ -43,17 +47,16 @@ b.formatters.err = function(params){
 	params.formatted = stat; // add formatted value
 	return params; // return object
 };
+var arr = [1,2,3,4,5,6];
 
 $(function(){
 
 	// loop devices and create them using jQuery_b
-	devices.forEach(function(device){
+	$("<span>").b({class : "dev.status|test:err", html : "dev.status:err"},{dev : d, test : arr},t1).appendTo("body");
+	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t2).appendTo("body");
+	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t3).appendTo("body");
+	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t4).appendTo("body");
 	
-		var row = $("<div>").appendTo("body");
-		
-		$("<span>").html( device.alias ).appendTo( row );
-		$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : device}).appendTo( row );
-		});
 });
 
 
@@ -63,12 +66,11 @@ window.setInterval(function(){
 		var stat = Math.round(Math.random()*6);
 		device._set("status", stat );
 		});
-	},1000);
+	},5000);
 
 </script>
 <style>
-body > div{margin:1px;}
-body > div > span{padding:10px; display:inline-block;}
+span{padding:10px; display:inline-block;}
 
 .OK{background-color:#d1ee63 !important}
 .GuessOk{background-color:#eeffaa !important}

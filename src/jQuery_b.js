@@ -4,13 +4,13 @@ $.fn.extend({
 	
 	if(typeof template == "undefined"){
 		// select default template
-		b.templates[0].bind( el[0], parameters, model);
+		b.templates[0].b( el[0], parameters, model);
 	}else{
 		if(model.type == "template"){
 			// model and template were switched...
-			model.bind( el[0], parameters, template);
+			model.b( el[0], parameters, template);
 		}else{
-			template.bind( el[0], parameters, model);
+			template.b( el[0], parameters, model);
 		}
 	}
 	

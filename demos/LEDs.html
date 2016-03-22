@@ -3,6 +3,8 @@
     <title>databinding</title>
 <script src="ext/jquery.js"></script>
 <script src="../src/b.js"></script>
+<script src="../src/b.binders.js"></script>
+<script src="../src/b.formatters.js"></script>
 <script src="../src/jQuery_b.js"></script>
 </head>
 <body>
@@ -20,28 +22,30 @@ var device = function(parameters){
 	obj.id = devices.length;
 	devices.push(obj);
 };
-	
+
+var temp = new b.template();
+
 // create the devices
-for(var i = 0; i < 20; i++){
+for(var i = 0; i < 5500; i++){
 	new device({alias : "Device " + i, status : 2});
 	}
 
 
-b.formatters.err = function(params){
-	
-	var stat;
-	switch(params[0].object[ params[0].param ]){
-		case 0: stat = "OK"; break;
-		case 1: stat = "GuessOk"; break;
-		case 2: stat = "Unknown"; break;
-		case 3: stat = "Warning"; break;
-		case 4: stat = "Minor"; break;
-		case 5: stat = "Major"; break;
-		case 6: stat = "Critical"; break;
-	}
-	
-	params.formatted = stat; // add formatted value
-	return params; // return object
+b.formatters.LED =  function(params){
+		
+        var col; // color
+        switch(params[0].object[ params[0].param ]){
+                case 1: col = "#ccc"; break;
+                case 2: col = "red"; break;
+                case 3: col = "yellow"; break;
+                case 4: col = "#60E065"; break;
+                case 5: col = "orange"; break;
+                case 8: col = "blue"; break;
+                default : col = "#fff";
+        }
+        params.formatted = "<span style='width:16px; height:16px; background:" + col + "; display:block; border-radius:8px;'></span>";
+        return params;
+
 };
 
 $(function(){
@@ -49,10 +53,8 @@ $(function(){
 	// loop devices and create them using jQuery_b
 	devices.forEach(function(device){
 	
-		var row = $("<div>").appendTo("body");
-		
-		$("<span>").html( device.alias ).appendTo( row );
-		$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : device}).appendTo( row );
+		var el = $("<div>").appendTo("body");
+		temp.b(el[0],{html : "dev.status:LED"},{dev : device});
 		});
 });
 
@@ -67,8 +69,7 @@ window.setInterval(function(){
 
 </script>
 <style>
-body > div{margin:1px;}
-body > div > span{padding:10px; display:inline-block;}
+body > div{margin:1px; float:left;}
 
 .OK{background-color:#d1ee63 !important}
 .GuessOk{background-color:#eeffaa !important}

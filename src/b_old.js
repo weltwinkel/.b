@@ -7,19 +7,102 @@
 		version : "0.1",
 		author 	: "Krispin Weiss",
 		templates : [], // <- all templates are stored here!
-		param_devider : "|" // e.g.: { html : "mod.time|mod.date"},{ mod : mod }
+		method_devider : "|" // e.g.: param1:text | param2:class
 	};
 	
 	//////////////////////////////////////////////////////////////////////////
 	/// define formatters ////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////
 	b.formatters = {
+
+		// CUSTOM FORMATTERS /////////////////////////////////////////////////
+		
+		// Circuit state (0: IDLE, 1: PRECHECK, 2: MAKE, 3: VERIFY, 4: BREAK, 5: WAITRESOURCES, 6: UNKNOWN)
+		cirSet : function(params){
+			
+			var stat;
+			switch(params[0].object[ params[0].param ]){
+				case "0": stat = "idle"; break;
+				case "1": stat = "precheck"; break;
+				case "2": stat = "make"; break;
+				case "3": stat = "verify"; break;
+				case "4": stat = "break"; break;
+				case "5": stat = "waitRes."; break;
+				case "6": stat = "unknown"; break;
+			}
+			
+			params.formatted = stat; // add formatted value
+			return params; // return object
+		},
+		
+		// LED
+		LED : function(params){
+			
+			var col; // color
+			switch(params[0].object[ params[0].param ]){
+				case "1": col = "#ccc"; break;
+				case "2": col = "red"; break;
+				case "3": col = "yellow"; break;
+				case "4": col = "#60E065"; break;
+				case "5": col = "orange"; break;
+				case "8": col = "blue"; break;
+				default : col = "#ccc";
+			} 
+			params.formatted = "<span style='width:16px; height:16px; background:" + col + "; display:block; border-radius:8px;'></span>";
+			return params;
+			
+		},
+		
+		// format timestamp
+		ts : function(params){
+			
+			var timestamp = params[0].object[ params[0].param ];
+			var date = new Date(timestamp);
+			
+			if(new Date(timestamp).setHours(0,0,0,0) == new Date().setHours(0,0,0,0)){
+				// today (ommit date)
+				params.formatted = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+			}else{
+				// not today
+				params.formatted = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + " on " + date.getUTCDate() + "." + (date.getMonth() + 1);
+			}
+			return params; // return object
+		},
+		
 		// DEFAULT FORMATTER /////////////////////////////////////////////////
 		default : function(params){
 			return params; // return object without change
 		}
 	};
 	
+	//////////////////////////////////////////////////////////////////////////
+	/// define binders ///////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////
+	b.binders = {
+		// CUSTOM BINDERS ////////////////////////////////////////////////////
+
+		
+		// DEFAULT BINDERS ///////////////////////////////////////////////////
+		// set text
+		html : function(el,params){
+			if(typeof params.formatted !== "undefined"){
+				el.innerHTML = params.formatted; // set formatted value
+			}else{
+				el.innerHTML = params[0].object[ params[0].param ]; // set raw value
+			}
+		},
+		
+		// set class
+		class : function(el,params){
+			if(typeof params.formatted !== "undefined"){
+				el.setAttribute("class", params.formatted); // set formatted value
+			}else{
+				el.setAttribute("class", params[0].object[ params[0].param ]); // set raw value
+			}
+		}
+	};
+	
+
 	
 	//////////////////////////////////////////////////////////////////////////
 	/// main /////////////////////////////////////////////////////////////////
@@ -27,38 +110,34 @@
 	b.add_setter = function(object){
 		
 		if(typeof object._set != "function"){ 
-			// add binders object
-			object._binders = {};
+			// add binders property
+			object._binders = [];
 		
 			// add setter to object
 			object._set = function(param,value){
+				var obj = this;
 				
-				var obj = this; // get instance of current object
-				
-				if(obj[ param ] != value){ // value was updated
-					
-					obj[ param ] = value; // update value
-
-					if(typeof obj._binders[ param ] === "object"){ // binders are registered! -> execute them
-
-						try{ 
-							obj._binders[ param ].forEach(function(fn){ 
-								try{ // execute formatter
-									var formatted = b.formatters[ fn.formatter ]( fn.params );
-								}catch(e){
-									console.warn("problem in formatter:", fn.formatter, e );
-									var formatted = fn.params; // pass to fn without change
-								}
-								
-								try{ // execute fn
-									b.binders[ fn.fn ]( fn.el, formatted );
-								}catch(e){
-									console.warn("problem in method:", fn.fn, e );
-								}
-							}); 
-						}catch(e){
-							console.log(e); // error
-						}
+				if(obj[ param ] != value && typeof obj._binders[ param ] != "undefined"){
+					// value was updated & binder(s) are registered
+					obj[ param ] = value;
+					//console.log("value was updated!");
+					try{ 
+						obj._binders[ param ].forEach(function(fn){ 
+							try{ // execute formatter
+								var formatted = b.formatters[ fn.formatter ](fn.params);
+							}catch(e){
+								console.warn("problem in formatter:", fn.formatter );
+								var formatted = fn.params; // pass to fn without formatting
+							}
+							
+							try{ // execute fn
+								b.binders[ fn.fn ](fn.el, formatted );
+							}catch(e){
+								console.warn("problem in method:", fn.fn );
+							}
+						}); 
+					}catch(e){
+						console.log(e); // error
 					}
 				}
 				
@@ -75,7 +154,7 @@
 		// parameters e.g: 'mods[i].html|i:formatter'
 				
 		// remove formatter (if specified) & split vars
-		parameters.split(":")[0].split( b.param_devider ).forEach(function(p){
+		parameters.split(":")[0].split("|").forEach(function(p){
 			
 			if(p.split("[").length > 1){ 
 				// array -> get index
@@ -102,9 +181,9 @@
 					var object = model[ p ];
 					var param = undefined;
 				}else if(model[p.split(".")[0]]){ // in model! e.g: { id : 'mod.id'},{ mod : mod }
-			
+					
 					var object = model[p.split(".")[0]]; // object in model
-					var param = p.split(".").slice(1).join('.'); // get parameter name
+					var param = p.split(".")[1]; // get parameter name
 				}else{
 					// not in model
 					try{
@@ -124,7 +203,7 @@
 		return params;
 	};
 		
-	b.b = function(el,bound_attr, model){
+	b.bind = function(el,bound_attr, model){
 		
 		template = this; // get template instance
 
@@ -142,7 +221,7 @@
 		
 			// loop parameters
 			params.forEach(function(param){
-				if(typeof param.object === "object" && !Array.isArray(param.object)){
+				if(typeof param.object == "object"){
 					
 					// add setter to object (only if typeof == object)
 					b.add_setter(param.object);
@@ -163,11 +242,20 @@
 					}
 					
 					// TEMPLATE
-					// save binder in template (obj._binders[ object.id ])
-					template._binders.push({
-						object : param.object,
-						param : param.param
-					});
+					// save binder in template (obj.binders[ object.id ])
+					if(typeof param.object.id == "undefined"){
+						//console.warn("no id attribute defined in: ",param);
+					}else{
+						if(typeof template._binders[ param.object.id ] == "undefined"){ // object must have unique id attribute!
+							// no binders yet...
+							template._binders[ param.object.id ] = []; // set default
+							}
+					
+						// no binders for this param yet (obj.binders[ object.id ][ paramName ])
+						if(typeof template._binders[ param.object.id ][ param.param ] == "undefined"){ // no binders yet...
+							template._binders[ param.object.id ][ param.param ] = param.object; // set default
+							}
+					}
 				});
 		
 			// execute binder
@@ -200,6 +288,7 @@
 
 	};
 	
+	
 	//////////////////////////////////////////////////////////////////////////
 	/// define template //////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////
@@ -211,18 +300,11 @@
 		if(typeof name != "undefined") obj.name = name; // set name (if specified)
 		
 		obj._binders = [];
-		
-		// get max id of templates
-		var id = 0;
-		b.templates.forEach(function(temp){
-			if(temp.id > id) id = temp.id;
-		});
-		
-		obj.id = id + 1; // set templates id to max id + 1
+		obj.id = b.templates.length;
 		obj.type = "template"; // used to identify object as template
 		
 		// methods
-		obj.b = b.b;
+		obj.bind = b.bind;
 		obj.unbind = b.template.unbind; // undbind & reset template
 		obj.remove = b.template.remove; // unbind & delete template
 		obj.div = b.template.div; // creates <div> using template.div({ attributes })
@@ -237,27 +319,24 @@
 		
 		var temp = this; // get instance
 		
-		var param,binder;
-		for(var z = (temp._binders.length-1); z >= 0; z--){
-			binder = temp._binders[ z ]; // binder: { object : object, param : param }
-			// loop binders in object._binders[ param ]
+		// loop object id's
+		for(var id in temp._binders){ // id = id attribute of object!
 			
-			if(typeof binder.object._binders === "undefined"){ // parameter is not an object...
-				temp._binders.splice(z,1); // remove array, string, int...
-				continue; // -> next binder
-				}
-			
-			for(var i = (binder.object._binders[ binder.param ].length-1); i >= 0; i--){
-				param = temp._binders[ z ].object._binders[ binder.param ][ i ];
-				if(param.template == temp.id){ // binder belongs to current template -> delete!
-					binder.object._binders[ binder.param ].splice(i,1);
+			// loop attributes
+			for(var param in temp._binders[ id ]){ // param = parameter of object
+		
+				// loop binders for param
+				var i = temp._binders[ id ][ param ]._binders[ param ].length;
+				while(i--){
+					if(temp._binders[ id ][ param ]._binders[ param ][ i ].template == temp.id){ // remove only binders mathing current template
+						temp._binders[ id ][ param ]._binders[ param ].splice(i,1);
+						}
 				}
 			}
-			
-			temp._binders.splice(z,1); // delete binder from template
 		}
 		
 		// reset template
+		temp._binders = [];
 		return temp; // return resetted template
 		
 	};
@@ -267,8 +346,19 @@
 			
 		var temp = this; // get instance
 		
-		// unbind all binders in template
-		temp.unbind();
+		// loop object id's
+		for(var id in temp._binders){
+			// loop attributes
+			for(var param in temp._binders[ id ]){
+
+				// loop binders for param
+				temp._binders[ id ][ param ]._binders[ param ].forEach(function(b,i){
+					if(b.template == temp.id){ // remove only binders mathing current template
+						temp._binders[ id ][ param ]._binders[ param ].splice(i,1);
+						}
+					});
+			}
+		}
 		
 		// don't remove b.templates[0] (default template)
 		if(temp.id == 0){
@@ -276,11 +366,11 @@
 		}else{
 
 			// get current template index in b.templates[]
-			for(var i = (b.templates.length-1); i >= 0; i--){
-				if(b.templates[ i ].id == temp.id){ // -> remove it!
-					b.templates.splice(i,1); // remove template
+			b.templates.forEach(function(t,i){
+				if(t.id == temp.id){ // -> remove it!
+					b.templates.splice( i,1); // remove template
 				}
-			}
+			});
 			
 			// loop template attributes and remove them
 			for(var param in temp){
@@ -308,7 +398,7 @@
 		}
 				
 		// call binding method
-		obj.b(obj.el,bound_attr,model);
+		obj.bind(obj.el,bound_attr,model);
 
 		return obj; // return object
 	};
@@ -340,4 +430,3 @@
 	// Expose b to the global object
 	window.b = b;
 }).call(this);
-
