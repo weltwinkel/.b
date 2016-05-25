@@ -1,5 +1,9 @@
 b.formatters = {
     
+    default : function(params){
+        return params;
+    },
+	
     // CUSTOM FORMATTERS /////////////////////////////////////////////////
     stdErr : function(params){
 		

@@ -54,6 +54,11 @@ try{
 If binders are found, they are executed by the ._set method. In the previous case this would lead to the class attribute and html of the first element in the first row to be updated.
 The example shows the use of the binders 'class' and 'html', the following are supplied as well:
 
+- html
+- class
+- bgCol
+- style (needs paramter e.g.: style="dev.status|backgroundColor:formatter1", formatter is optional)
+
 Additional binders can be added when needed.
 
 ## using formatters

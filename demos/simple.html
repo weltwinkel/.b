@@ -3,67 +3,42 @@
     <title>databinding</title>
 <script src="ext/jquery.js"></script>
 <script src="../src/b.js"></script>
-<script src="../src/jQuery_b.js"></script>
+<script src="../src/b.binders.js"></script>
+<script src="../src/b.formatters.js"></script>
+<script src="../src/b.jQuery.js"></script>
 </head>
 <body>
 <script>
 
-// create objects
-var devices = []; // create array where all devices are stored
-
+// define model
 var device = function(parameters){
-	obj = this; // get instance
-	for(var key in parameters){ // loop attributes
-		obj[ key ] = parameters[ key ]; // set attribute
-	}
-	
-	obj.id = devices.length;
-	devices.push(obj);
+    obj = this; // get instance
+    for(var key in parameters){ // loop attributes
+        obj[ key ] = parameters[ key ]; // set attribute
+    }
 };
-	
-// create the devices
-for(var i = 0; i < 20; i++){
-	new device({alias : "Device " + i, status : 2});
-	}
 
 
-b.formatters.err = function(params){
-	
-	var stat;
-	switch(params[0].object[ params[0].param ]){
-		case 0: stat = "OK"; break;
-		case 1: stat = "GuessOk"; break;
-		case 2: stat = "Unknown"; break;
-		case 3: stat = "Warning"; break;
-		case 4: stat = "Minor"; break;
-		case 5: stat = "Major"; break;
-		case 6: stat = "Critical"; break;
-	}
-	
-	params.formatted = stat; // add formatted value
-	return params; // return object
-};
+// create devices
+var devices = [];
+devices.push( new device({alias : "Device 1", status : "OK"}) ); // create device and add it to array
+devices.push( new device({alias : "Device 2", status : "Warning"}) ); // create device and add it to array
+
 
 $(function(){
 
 	// loop devices and create them using jQuery_b
 	devices.forEach(function(device){
 	
-		var row = $("<div>").appendTo("body");
-		
-		$("<span>").html( device.alias ).appendTo( row );
-		$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : device}).appendTo( row );
-		});
+	var row = $("<div>").appendTo("body");
+	
+	$("<span>").html( device.alias ).appendTo( row );
+	$("<span>").b({class : "dev.status", html : "dev.status"},{dev : device}).appendTo( row );
+	});
+	
+	// change status
+	devices[0]._set("status","Critical");
 });
-
-
-window.setInterval(function(){
-
-	devices.forEach(function(device){
-		var stat = Math.round(Math.random()*6);
-		device._set("status", stat );
-		});
-	},1000);
 
 </script>
 <style>
