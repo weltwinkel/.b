@@ -35,8 +35,8 @@ Let's use jQuery to render both devices:
 devices.forEach(function(device){
 	
 	var row = $("<div>").appendTo("body");
-	$("<div>").b({class : "d.status", html : "d.status"},{d : device}).appendTo( row );
-	$("<div>").html( device.alias ).appendTo( row );
+		$("<span>").b({class : "d.status", html : "d.status"},{d : device}).appendTo( row );
+		$("<span>").html( device.alias ).appendTo( row );
 	});	
 ```
 
@@ -69,8 +69,8 @@ When displaying values, formatter functions may be used in order to format date 
 devices.forEach(function(device){
 	
 	var row = $("<div>").appendTo("body");
-	$("<div>").b({class : "d.status", html : "d.status:formatter1"},{d : device}).appendTo( row );
-	$("<div>").html( device.alias ).appendTo( row );
+		$("<span>").b({class : "d.status", html : "d.status:formatter1"},{d : device}).appendTo( row );
+		$("<span>").html( device.alias ).appendTo( row );
 	});	
 ```
 	
@@ -109,8 +109,8 @@ var template = b.template(); // creates a new template
 devices.forEach(function(device){
 	
 	var row = $("<div>").appendTo("body");
-	$("<div>").b({class : "d.status", html : "d.status"},{d : device}, template).appendTo( row );
-	$("<div>").html( device.alias ).appendTo( row );
+		$("<span>").b({class : "d.status", html : "d.status"},{d : device}, template).appendTo( row );
+		$("<span>").html( device.alias ).appendTo( row );
 	});	
 ```
 	
