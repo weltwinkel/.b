@@ -25,11 +25,11 @@ devices.push( new device({alias : "Device 1", status : "ok"}) ); // create devic
 devices.push( new device({alias : "Device 2", status : "warning"}) ); // create device and add it to array
 ```
 
-now these devices will be displayed on a site. Some attributes such as "status" are known to be variabel and change overtime.
-Other attributes such as "alias" remain unchanged. When displaying the devices the variable attributes of the model can be bound to the renders HTML
+now these devices will be displayed on a site. Some attributes such as "status" are known to be variabel and change over time.
+Other attributes such as "alias" remain unchanged. When displaying the devices the variable attributes of the model can be bound to the HTML elements
 so that the HTML can be updated any time the model changes.
 
-Let's use jQuery to render both devices:
+Let's use jQuery to render both devices, this is accomplished using a tiny jQuery plugin .b():
 
 ```
 devices.forEach(function(device){
@@ -40,8 +40,14 @@ devices.forEach(function(device){
 	});	
 ```
 
-In doing this, two binders are created per object. These are stored in the ._binders : [] key of each device.
-A ._set(key, val) method is added as well. Should "Device 1" be updated, following code can be used:
+The jQuery Plugin .b(binders, modal, (template) ) takes three arguments:
+
+ - binders : { binder : "modal.paramter:formatter"}
+ - modal : { modal : modal }
+ - template (optional) : template instance with which binders are associated
+
+In the code above, two binders (class, html) are created per object. These are stored in the ._binders : [] key of each device.
+A ._set(key, val) method is added as automatically. Should "Device 1" be updated, following code can be used:
 
 ```
 try{ 
