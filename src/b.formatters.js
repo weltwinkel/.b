@@ -53,6 +53,36 @@ b.formatters = {
         params.formatted = stat; // add formatted value
         return params; // return object
     },
+	
+	worstCol : function(params){
+		
+		params.formatted = "#0080ff";
+		return params;
+	},
+	
+	worstErr : function(params){
+
+		var val = 0;
+		for(var key in params){
+			if(typeof params[ key ] == "object"){
+				if(params[ key ].object[ params[ key ].param ] > val) val = params[ key ].object[ params[ key ].param ];
+			}
+		}
+
+		var stat;
+        switch(val.toString()){
+			case "0": stat = "OK"; break;
+			case "1": stat = "GuessOk"; break;
+			case "2": stat = "Unknown"; break;
+			case "3": stat = "Warning"; break;
+			case "4": stat = "Minor"; break;
+			case "5": stat = "Major"; break;
+			case "6": stat = "Critical"; break;
+        }
+
+        params.formatted = stat; // add formatted value
+		return params;
+	},
 
     // LED (NMS specific colors)
     LED : function(params){

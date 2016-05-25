@@ -4,7 +4,7 @@
 	/// settings /////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////
 	b = {
-		version : "0.1",
+		version : "0.1.1",
 		author 	: "Krispin Weiss",
 		templates : [], // <- all templates are stored here!
 		param_devider : "|" // e.g.: { html : "mod.time|mod.date"},{ mod : mod }
@@ -75,56 +75,55 @@
 		// parameters e.g: 'mods[i].html|i:formatter'
 				
 		// remove formatter (if specified) & split vars
-		parameters.split(":")[0].split( b.param_devider ).forEach(function(p){
+		parameters.split( b.param_devider ).forEach(function(p){
 			
-			if(p.split("[").length > 1){ 
-				// array -> get index
+			// e.g.: ${physical-interface}:ethernet-mac-statistics:input-crc-errors:stdErr
+			if(typeof b.formatters[ p.split(":").pop() ] == "function"){ // is formatter
+				//p = p.split(":").splice( (p.split(":").length-1), 1).join("");
+				var tmp = p.split(":");
+				tmp.splice(-1,1); // remove last segment (formatter)
+				p = tmp.join(":"); // join segments again
+			}
+	
+			// assume plain old object
+			if(typeof model[ p ] != "undefined"){ // e.g.: { id : 'i'},{ i : i}
+				// variable from model, e.g: i
+				var object = model[ p ];
+				var param = undefined;
+			}else if(Array.isArray(model[ p.split(".")[0] ]) == true){ // Array of objects!
 				
-				var index = p.split("[")[1].split("]")[0];
-				if(isNaN(index)){ // e.g.: mods[ i ].id:id
-					if(typeof model[index] === "number"){
-						index = model[index];
-					}else{
-						console.warn("could not resolve index",index);
+				// loop array
+				model[ p.split(".")[0] ].forEach(function(object){
+					if(typeof object == "object"){
+						params.push({ object : object, param : p.split(".")[1]});
 					}
-				}else{ // index is a number
-					index = parseInt(index);
-				}
+				});
 				
-				var array = eval(p.split("[")[0]);
-				var param = p.split(".")[1];
-
-				var object = array[ index ];
-				
-			}else{ // plain old object
-				if(typeof model[ p ] != "undefined"){ // e.g.: { id : 'i'},{ i : i}
-					// variable from model, e.g: i
-					var object = model[ p ];
+			}else if(model[p.split(".")[0]]){ // in model! e.g: { id : 'mod.id'},{ mod : mod }
+		
+				var object = model[p.split(".")[0]]; // object in model
+				var param = p.split(".").slice(1).join('.'); // get parameter name
+			}else{
+				// not in model
+				try{
+					var object = eval(p.split(".")[0]);
+					var param = p.split(".")[1]; // object is undefined if parameter is number,string etc...
+				}catch(e){
+					// whatever it is, use as string...
+					var object = p;
 					var param = undefined;
-				}else if(model[p.split(".")[0]]){ // in model! e.g: { id : 'mod.id'},{ mod : mod }
-			
-					var object = model[p.split(".")[0]]; // object in model
-					var param = p.split(".").slice(1).join('.'); // get parameter name
-				}else{
-					// not in model
-					try{
-						var object = eval(p.split(".")[0]);
-						var param = p.split(".")[1]; // object is undefined if parameter is number,string etc...
-					}catch(e){
-						// whatever it is, use as string...
-						var object = p;
-						var param = undefined;
-					}
 				}
 			}
+			
 				
-			params.push({ object : object, param : param});
+			if(typeof object !== "undefined") params.push({ object : object, param : param});
+			
 		});
 		
 		return params;
 	};
 		
-	b.b = function(el,bound_attr, model){
+	b.b = function(el, bound_attr, model){
 		
 		template = this; // get template instance
 
@@ -137,7 +136,7 @@
 			// check for formatter
 			var formatter = 'default'; // default
 			if(bound_attr[fn].split(":").length > 1){
-				formatter = bound_attr[fn].split(":")[1];
+				formatter = bound_attr[fn].split(":").pop();
 			}
 		
 			// loop parameters
@@ -174,14 +173,14 @@
 			try{ // execute formatter
 				var formatted = b.formatters[ formatter ](params);
 			}catch(e){
-				console.warn("problem in formatter:", formatter);
+				console.warn("problem in formatter:", formatter, params);
 				var formatted = params; // pass to fn without formatting
 			}
 				
 			try{ // execute fn
 				b.binders[ fn ]( el, formatted );
 			}catch(e){ // catch error
-				console.warn("problem in method:", fn);
+				console.warn("problem in method:", fn, params);
 			}
 			
 			//binders.push({fn : fn, params : params});
@@ -253,7 +252,6 @@
 					binder.object._binders[ binder.param ].splice(i,1);
 				}
 			}
-			
 			temp._binders.splice(z,1); // delete binder from template
 		}
 		

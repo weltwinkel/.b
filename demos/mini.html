@@ -5,7 +5,7 @@
 <script src="../src/b.js"></script>
 <script src="../src/b.binders.js"></script>
 <script src="../src/b.formatters.js"></script>
-<script src="../src/jQuery_b.js"></script>
+<script src="../src/b.jQuery.js"></script>
 </head>
 <body>
 <script>
@@ -17,7 +17,7 @@ var device = function(parameters){
 	obj = this; // get instance
 	for(var key in parameters){ // loop attributes
 		obj[ key ] = parameters[ key ]; // set attribute
-		obj["foo.bar"] = "hello";
+		obj["$virtual::PortName"] = 5;
 	}
 	
 	obj.id = devices.length;
@@ -32,7 +32,7 @@ var t3 = new b.template();
 var t4 = new b.template();
 
 b.formatters.err = function(params){
-	console.log(params);
+
 	var stat;
 	switch(params[0].object[ params[0].param ]){
 		case 0: stat = "OK"; break;
@@ -52,7 +52,7 @@ var arr = [1,2,3,4,5,6];
 $(function(){
 
 	// loop devices and create them using jQuery_b
-	$("<span>").b({class : "dev.status|test:err", html : "dev.status:err"},{dev : d, test : arr},t1).appendTo("body");
+	$("<span>").b({class : "dev.statusss:err", html : "dev.$virtual::PortName:err"},{dev : d, test : arr},t1).appendTo("body");
 	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t2).appendTo("body");
 	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t3).appendTo("body");
 	//$("<span>").b({class : "dev.status:err", html : "dev.status:err"},{dev : d},t4).appendTo("body");
