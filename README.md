@@ -2,11 +2,11 @@
 
 
 Tiny one-way data binding binding library.
-Developed for a client Applikation that periodically polls for changes of many devices. The models are created when first loading the application.
+Developed for a client application that periodically polls for changes of many devices. The models are created when first loading the application.
 
 ## basic usage
 
-A device model may look like this:
+A typical device model may look like this:
 
 ```
 var device = function(parameters){
